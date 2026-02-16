@@ -27,20 +27,47 @@ public class Task_2 {
     private static class myThreads extends Thread {
         Semaphore writerMutex;
         Semaphore readerSemaphore;
-        boolean isWriter;
-        int ID;     // Thread ID for logging purposes
+        boolean isReader;           // Reader vs Writer ID
+        int ID;                     // Reader/Writer Thread ID
+        static Semaphore readersTurn = new Semaphore(1);
+        static Semaphore writersTurn = new Semaphore(1);
 
         // Constructor
         public myThreads(Semaphore writerMutex, Semaphore readerSemaphore, boolean isWriter, int ID) {
             this.writerMutex = writerMutex;
             this.readerSemaphore = readerSemaphore;
-            this.isWriter = isWriter;
+            this.isReader = isWriter;
             this.ID = ID;
         }
        
         @Override
         public void run() {
+            if (isReader) {
+                try {
+                    readersTurn.acquire();
+                    readerSemaphore.acquire();
+                    System.out.println("Reader " + ID + " is reading.");
+                    Thread.sleep(1000); // Simulate reading time
+                    writersTurn.release();
+                    readerSemaphore.release();
+                } 
+                catch (Exception e) {
 
+                }
+            }
+            else {
+                try {
+                    writersTurn.acquire();
+                    writerMutex.acquire();
+                    System.out.println("Writer " + ID + " is writing.");
+                    Thread.sleep(1000); // Simulate writing time
+                    readersTurn.release();
+                    writerMutex.release();
+                } 
+                catch (Exception e) {
+
+                }
+            }
         }
     }
 
