@@ -10,93 +10,187 @@ public class Task_2 {
         int N = getValidNum(scanner, 1, R, "How many readers should be allowed to read at once? (integer from 1-R): ");
 
         // Shared resource synchronization primitives
-        Semaphore writersMutex = new Semaphore(1);      // Init readers count
+        Semaphore writersMutex = new Semaphore(0);      // Init readers count
         Semaphore readersSemaphore = new Semaphore(N);          // Init readers count
-        Semaphore readersTurnMutex = new Semaphore(N);          // init readers turn
+        
+        Semaphore activeReadersCountMutex = new Semaphore(1);
+
+        Semaphore writersLeftToWriteMutex = new Semaphore(1);
+        Semaphore readersLeftToReadMutex = new Semaphore(1);
 
         // Starts reader threads
         for (int i = 0; i < R; i++) {
-            new myThreads(writersMutex, readersSemaphore, readersTurnMutex, true, i, N).start();
+            if (i == 0) {
+                // First reader thread initializes the readersLeftToRead variable to the total number of readers
+                new myThreads(readersSemaphore, activeReadersCountMutex, readersLeftToReadMutex, writersMutex, writersLeftToWriteMutex, i, N, R).start();
+            }
+            else {
+                // Subsequent reader threads use the second constructor
+                new myThreads(readersSemaphore, activeReadersCountMutex, readersLeftToReadMutex, writersMutex, writersLeftToWriteMutex, i).start();
+            }
         }
         // Starts writer threads
         for (int i = 0; i < W; i++) {
-            new myThreads(writersMutex, readersSemaphore, readersTurnMutex, false, i, N).start();
+            if (i == 0) {
+                // First writer thread initializes the writersLeftToWrite variable to the total number of writers
+                new myThreads(readersSemaphore, writersMutex, readersLeftToReadMutex, writersLeftToWriteMutex, i, W).start();
+            }
+            else {
+                // Writer threads use the third constructor
+                new myThreads(readersSemaphore, writersMutex, readersLeftToReadMutex, writersLeftToWriteMutex, i).start();
+            }
         }
     }
 
 
     private static class myThreads extends Thread {
-        Semaphore writersMutex, readersSemaphore, readersTurnMutex;
+        Semaphore writersMutex, readersSemaphore, activeReadersCountMutex, readersLeftToReadMutex, writersLeftToWriteMutex;
         boolean isReader;
         int ID;
-        static int activeReadersCount = 0, maxReaders;
-        // Init readers turn
-        static Semaphore activeReadersCountMutex = new Semaphore(1);
-        static Semaphore writersTurnMutex = new Semaphore(0);
+        static int activeReadersCount = 0, maxReaderBatchSize, readersLeftToRead, writersLeftToWrite;
 
 
-        // Constructor
-        public myThreads(Semaphore writersMutex, Semaphore readersSemaphore, Semaphore readersTurnMutex, boolean isReader, int ID, int maxReaders) {
-            this.writersMutex = writersMutex;
+        // First readers thread constructor, initializes the readersLeftToRead variable to the total number of readers
+        public myThreads(Semaphore readersSemaphore, Semaphore activeReadersCountMutex, Semaphore readersLeftToReadMutex, Semaphore writersMutex, Semaphore writersLeftToWriteMutex, int ID, int maxReaderBatchSize, int totalReaders) {
+            // Initialize the thread with the shared synchronization primitives
             this.readersSemaphore = readersSemaphore;
-            this.readersTurnMutex = readersTurnMutex;
-            this.isReader = isReader;
+            this.activeReadersCountMutex = activeReadersCountMutex;
+            this.readersLeftToReadMutex = readersLeftToReadMutex;
+            this.writersLeftToWriteMutex = writersLeftToWriteMutex;
+            this.writersMutex = writersMutex;
+
+            // Initialize thread type and ID
+            isReader = true;
             this.ID = ID;
-            Task_2.myThreads.maxReaders = maxReaders;   // Access the class static var instead of instances var
+            Task_2.myThreads.maxReaderBatchSize = maxReaderBatchSize;   // Access the class static var instead of instances var
+            // Increment the count of readers left to read
+            Task_2.myThreads.readersLeftToRead = totalReaders;
+        }
+
+        // Reader thread constructor
+        public myThreads(Semaphore readersSemaphore, Semaphore activeReadersCountMutex, Semaphore readersLeftToReadMutex, Semaphore writersMutex, Semaphore writersLeftToWriteMutex, int ID) {
+            // Initialize the thread with the shared synchronization primitives
+            this.readersSemaphore = readersSemaphore;
+            this.activeReadersCountMutex = activeReadersCountMutex;
+            this.readersLeftToReadMutex = readersLeftToReadMutex;
+            this.writersLeftToWriteMutex = writersLeftToWriteMutex;
+            this.writersMutex = writersMutex;
+
+            // Initialize thread type and ID
+            isReader = true;
+            this.ID = ID;
+        }
+
+        // Writer thread constructor
+        public myThreads(Semaphore readersSemaphore, Semaphore writersMutex, Semaphore readersLeftToReadMutex, Semaphore writersLeftToWriteMutex, int ID, int totalWriters) {
+            // Initialize the thread with the shared synchronization primitive
+            this.readersSemaphore = readersSemaphore;
+            this.writersMutex = writersMutex;
+            this.readersLeftToReadMutex = readersLeftToReadMutex;
+            this.writersLeftToWriteMutex = writersLeftToWriteMutex;
+
+            // Initialize thread type and ID
+            isReader = false;
+            this.ID = ID;
+            Task_2.myThreads.writersLeftToWrite = totalWriters;
+        }
+
+        // Writer thread constructor
+        public myThreads(Semaphore readersSemaphore, Semaphore writersMutex, Semaphore readersLeftToReadMutex, Semaphore writersLeftToWriteMutex, int ID) {
+            // Initialize the thread with the shared synchronization primitives
+            this.readersSemaphore = readersSemaphore;
+            this.writersMutex = writersMutex;
+            this.readersLeftToReadMutex = readersLeftToReadMutex;
+            this.writersLeftToWriteMutex = writersLeftToWriteMutex;
+
+            // Initialize thread type and ID
+            isReader = false;
+            this.ID = ID;
         }
        
 
         @Override
         public void run() {
-            if (isReader) {
-                try {
+            try {
+                // Handles reader case
+                if (isReader) {
                     // Allow N readers during this readers turn
-                    /*
-                     *   Next reader after max readers shall reset the active 
-                     *   reader count and wait for readersTurnMutex to be 
-                     *   released by the writer.
-                     */ 
-                    readersTurnMutex.acquire();             // Wait until readers turn and/or current readers batch is done
+                    readersSemaphore.acquire();             // Wait until readers turn and/or current readers batch is done
                     activeReadersCountMutex.acquire();
                     activeReadersCount++;
                     activeReadersCountMutex.release();
 
 
                     // Aquire permit to read
-                    readersSemaphore.acquire();
                     // Simulate reading time
                     System.out.println("-R" + (ID + 1) + " began reading.");
                     Thread.sleep(1000);
                     System.out.println("--R" + (ID + 1) + " finished reading.");
 
-                    // Done reading, release readers permit
-                    readersSemaphore.release();
+
+                    boolean isLastReaderInBatch = false, isLastReaderOverall_1 = false;
                     // Decriment active readers count
                     activeReadersCountMutex.acquire();
                     activeReadersCount--;
-                    // Are you the last reader? If so switch it to writers turn.
                     if (activeReadersCount == 0) {
-                        writersTurnMutex.release();
+                        isLastReaderInBatch = true;
                     }
                     activeReadersCountMutex.release();
-                } 
-                catch (Exception e) {
-                    e.printStackTrace();  
+                    // Decriment readers left to read count
+                    readersLeftToReadMutex.acquire();
+                    readersLeftToRead--;
+                    if (readersLeftToRead == 0) {
+                        isLastReaderOverall_1 = true;
+                    }
+                    readersLeftToReadMutex.release();
+
+                    // Are you the last reader in the batch and not the last batch? If so switch it to writers turn.
+                    if (isLastReaderInBatch && !isLastReaderOverall_1) {
+                        writersMutex.release();
+                    }
                 }
-            }
-            else {
-                try {
-                    writersTurnMutex.acquire();
+                // Handles Writer case
+                else {
                     writersMutex.acquire();
+
+
                     System.out.println("---W" + (ID + 1) + " began writing.");
                     Thread.sleep(1000); // Simulate writing time
                     System.out.println("----W" + (ID + 1) + " finished writing.");
-                    readersTurnMutex.release(maxReaders);
-                    writersMutex.release();
-                } 
-                catch (Exception e) {
-                    e.printStackTrace();  
+
+
+                    writersLeftToWriteMutex.acquire();
+                    writersLeftToWrite--;
+                    if (writersLeftToWrite > 0) {
+                        readersSemaphore.release(maxReaderBatchSize);
+                    }
+                    writersLeftToWriteMutex.release();
                 }
+
+                // Check if you are the last reader/writer to finish, if so switch the turn to the other type of thread
+                boolean isLastReaderOverall_2 = false, isLastWriterOverall = false;
+                readersLeftToReadMutex.acquire();
+                if (readersLeftToRead <= 0) {
+                    // No more readers left to read, release the writers turn mutex to allow writers to proceed
+                    writersMutex.release();
+                    isLastReaderOverall_2 = true;
+                }
+                readersLeftToReadMutex.release();
+                writersLeftToWriteMutex.acquire();
+                if (writersLeftToWrite <= 0) {
+                    // No more writers left to write, release the readers turn mutex to allow readers to proceed
+                    if (!isLastReaderOverall_2) {
+                        readersSemaphore.release(maxReaderBatchSize);
+                    }
+                    isLastWriterOverall = true;
+                }
+                writersLeftToWriteMutex.release();
+                if (isLastReaderOverall_2 && isLastWriterOverall) {
+                    System.out.println("\r\nAll writers have finished.\r\nProgram Exiting.");
+                }
+            }
+            catch (InterruptedException e) {
+                e.printStackTrace();
             }
         }
     }
