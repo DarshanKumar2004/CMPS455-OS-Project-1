@@ -7,7 +7,7 @@ public class Task_2 {
         
         int R = getValidNum(scanner, 1, 10000, "How many reading threads should be created? (integer from 1-10000): ");
         int W = getValidNum(scanner, 1, 10000, "How many writer threads should be created? (integer from 1-10000): ");
-        int N = getValidNum(scanner, 1, R, "How many readers should be allowed to read at once? (integer from 1-R): ");
+        int N = getValidNum(scanner, 1, R, "How many readers should be allowed to read at once? (integer from 1-" + R + "): ");
 
         // Shared resource synchronization primitives
         Semaphore writersMutex = new Semaphore(0);      // Init readers count
@@ -186,7 +186,7 @@ public class Task_2 {
                 }
                 writersLeftToWriteMutex.release();
                 if (isLastReaderOverall_2 && isLastWriterOverall) {
-                    System.out.println("\r\nAll writers have finished.\r\nProgram Exiting.");
+                    System.out.println("\r\nAll writers have finished.\r\nProgram Exiting.\r\n");
                 }
             }
             catch (InterruptedException e) {
