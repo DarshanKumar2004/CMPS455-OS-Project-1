@@ -213,7 +213,6 @@ public class Task_2 {
                     System.out.print(prompt);
                 }
                 else {     // Exit case
-                    System.out.println("This input is acceptable. You entered the number: " + number);
                     return number;
                 }
             } 
