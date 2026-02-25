@@ -69,7 +69,7 @@ public class main {
     public static void callTask1() {
         // Call Task_1's main method directly
         try {
-            Task_1.dining_philosophers(new String[]{});
+            Task_1.main(new String[]{});
         } catch (InterruptedException e) {
             e.printStackTrace();
         }
@@ -77,6 +77,6 @@ public class main {
 
     public static void callTask2() {
         // Call Task_2's main method directly
-        Task_2.readers_writer(new String[]{});
+        Task_2.main(new String[]{});
     }  
 }

@@ -8,7 +8,7 @@ import java.util.concurrent.Semaphore;
 
 // Task 2 - Readers-Writer Problem
 public class Task_2 {
-    public static void readers_writer(String[] args) {
+    public static void main(String[] args) {
         Scanner scanner = new Scanner(System.in);
         
         int R = getValidNum(scanner, 1, 10000, "How many reading threads should be created? (integer from 1-10000): ");

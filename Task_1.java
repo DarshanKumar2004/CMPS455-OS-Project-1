@@ -101,7 +101,7 @@ public class Task_1 {
         }
     }
 
-    public static void dining_philosophers(String[] args) throws InterruptedException {
+    public static void main(String[] args) throws InterruptedException {
 
         // Create barrier until all philosophers have arrived and finished eating
         Barrier arrivalBarrier = new Barrier(P, "--All philosophers have arrived.");
