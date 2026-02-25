@@ -31,14 +31,14 @@ public class Task_1 {
 
         while (true) {
             try {
-                System.out.print("How many philosophers should be created? (Enter integer between 1-10,000): ");
+                System.out.print("\nHow many philosophers should be created? (Enter integer between 1-10,000): ");
                 tempP = input.nextInt();
 
                 // Handle case for if P is zero or one
                 // Repeat request until correct input is entered
                 while (tempP < 2) {
                      System.out.println("Too little philosophers. Please create at least 2 philosophers to have a pair of chopsticks.");
-                     System.out.print("How many philosophers should be created? (Enter integer between 1-10,000): ");
+                     System.out.print("\nHow many philosophers should be created? (Enter integer between 1-10,000): ");
                      tempP = input.nextInt();
                 }
 
@@ -46,7 +46,7 @@ public class Task_1 {
                 // Repeat request until correct input is entered
                 while (tempP > 10000) {
                     System.out.println("Too many philosophers. Please create less than 10,000 philosophers.");
-                    System.out.print("How many philosophers should be created? (Enter integer between 1-10,000): ");
+                    System.out.print("\nHow many philosophers should be created? (Enter integer between 1-10,000): ");
                     tempP = input.nextInt();
                 }
                 break;
@@ -88,6 +88,8 @@ public class Task_1 {
             }
         }
 
+        input.close();
+
         // Assign M and mealsRemaining to valid user input
         M = tempM;
         mealsRemaining = M;
@@ -99,13 +101,15 @@ public class Task_1 {
         }
     }
 
-    public static void main(String[] args) throws InterruptedException {
+    public static void dining_philosophers(String[] args) throws InterruptedException {
 
         // Create barrier until all philosophers have arrived and finished eating
         Barrier arrivalBarrier = new Barrier(P, "--All philosophers have arrived.");
         Barrier departureBarrier = new Barrier(P, "---------All philosophers have finished eating.");
 
         Thread[] philosophers = new Thread[P];
+
+        System.out.print("\n");
 
         // Start new thread for each philosopher
         for (int i = 0; i < P; i++) {
@@ -119,6 +123,8 @@ public class Task_1 {
         for (int i = 0; i < P; i++) {
             philosophers[i].join();
         }
+
+        System.out.println("\n******* End of dining philosophers ********");
     }
 
     static class Philosopher implements Runnable {

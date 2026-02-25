@@ -1,8 +1,14 @@
+/* Team Members: Abigail Boggs (C00513558), Darshan Kumar (C00529580)
+ * CMPS 455
+ * Project 1 - Task 2
+ */
+
 import java.util.Scanner;
 import java.util.concurrent.Semaphore;
 
+// Task 2 - Readers-Writer Problem
 public class Task_2 {
-    public static void main(String[] args) {
+    public static void readers_writer(String[] args) {
         Scanner scanner = new Scanner(System.in);
         
         int R = getValidNum(scanner, 1, 10000, "How many reading threads should be created? (integer from 1-10000): ");
@@ -186,7 +192,9 @@ public class Task_2 {
                 }
                 writersLeftToWriteMutex.release();
                 if (isLastReaderOverall_2 && isLastWriterOverall) {
-                    System.out.println("\r\nAll writers have finished.\r\nProgram Exiting.\r\n");
+                    System.out.println("\r\nAll writers have finished.");
+
+                    System.out.println("\n******* End of readers-writer problem *******");
                 }
             }
             catch (InterruptedException e) {
